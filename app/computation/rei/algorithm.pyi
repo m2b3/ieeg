@@ -1,3 +1,7 @@
+# Type declarations for the BrainQuake-derived REI integration.
+# See algorithm.py and THIRD_PARTY_NOTICES.md for upstream provenance,
+# local adaptations, and unresolved permissions for intermediate IEEG_EI changes.
+
 from dataclasses import dataclass
 from typing import Any, Callable
 

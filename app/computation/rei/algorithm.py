@@ -1,7 +1,20 @@
 r"""
 app.computation.rei.algorithm
 
-Batch EI computation using your existing segment CSV.
+BrainQuake-derived EI computation adapted for the IEEG application.
+
+Scientific method: Bartolomei, Chauvel, and Wendling (2008).
+Shared core: HongLabTHU/BrainQuake, Apache-2.0, client_ictal.py at
+398492abb6440b86d447a8f6a7d83920bf241009. Intermediate source:
+allucas/IEEG_EI, ei_main_gui.py at 2dbd30bebb37e84ff6e06a168bca542ed0e2fc33.
+Modified for this application: 60-140 Hz band, fourth-order filtering,
+10-sigma threshold, float64 normalization, numerical/window safeguards,
+and GUI data/result integration. Eva Ozturk's GSoC contribution is the
+adaptation and integration, not invention of the underlying EI algorithm.
+See THIRD_PARTY_NOTICES.md and LICENSES/Apache-2.0.txt. Permission for
+IEEG_EI-specific changes remains unresolved; this is not a blanket AGPL file.
+
+Also supports batch computation using a segment CSV.
 
 This script DOES NOT use the GUI and DOES NOT require iEEG.org login.
 By default, EDF recordings are resampled to 1000 Hz before EI window
@@ -117,7 +130,7 @@ def _get_channel_qc_module():
 
 
 # -------------------------
-# EI core from scripts code
+# BrainQuake-derived EI core; provenance and modifications documented above
 # -------------------------
 
 def compute_hfer(
@@ -215,7 +228,7 @@ def bandpass_hf(
     high_freq: float = DEFAULT_REI_HIGH_FREQ_HZ,
 ) -> Array:
     """
-    High-frequency filtering from original code.
+    Local preprocessing: BrainQuake band defaults with IEEG_EI filter order.
     Input/output: channels x time.
     """
     nyquist = fs / 2.0

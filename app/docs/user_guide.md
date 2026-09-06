@@ -263,7 +263,11 @@ To reopen results, first load the matching recording and montage, then click **I
 
 REI estimates how early and strongly each channel is recruited at seizure onset. It combines baseline-normalized high-frequency energy with recruitment time, then assigns a score and rank. Higher scores indicate earlier, stronger recruitment relative to the analyzed channels.
 
-This implementation adapts Lucas A.'s [IEEG_EI project](https://github.com/allucas/IEEG_EI) and the Epileptogenicity Index method of [Bartolomei et al. (2008)](https://doi.org/10.1093/brain/awn111). Numerical parity and clinical validation are not documented for this GUI implementation. REI is a review aid, not a clinical conclusion.
+REI adapts the EI implementation in [BrainQuake](https://github.com/HongLabTHU/BrainQuake), an Apache-2.0-licensed project, based on the scientific method of [Bartolomei et al. (2008)](https://doi.org/10.1093/brain/awn111). Its current settings combine BrainQuake's 60–140 Hz band with the fourth-order filtering and 10σ threshold also used in Alfredo Lucas's [IEEG_EI](https://github.com/allucas/IEEG_EI). BrainQuake uses fifth-order filtering and 20σ; IEEG_EI uses a 70–140 Hz band. Both upstream cores use 0.5-second energy and 0.25-second scoring windows.
+
+Eva Ozturk's contribution is adapting and connecting this computation to the application's channel/montage selection, preprocessing, editable time windows, visualizations, review workflow, and exports. The application does not use IEEG_EI's GUI or login workflow. The recorded code provenance through IEEG_EI remains acknowledged; the absence of an explicit license for its changes is documented in the [third-party notices](https://github.com/m2b3/IEEG/blob/main/THIRD_PARTY_NOTICES.md). Attribution does not resolve that permission gap.
+
+Local numerical safeguards and window handling also differ from the upstream code. Numerical parity and clinical validation are not documented for this GUI implementation. REI is a review aid, not a clinical conclusion.
 
 #### Time
 
@@ -366,7 +370,7 @@ Heatmap time is expressed relative to seizure onset. Sorting or limiting rows do
 
 Gamma Spike analysis detects interictal spikes, measures associated **30–100 Hz** activity, and classifies events as **gamma** or **non-gamma**.
 
-It is a Python translation of the [Lab-Frauscher Spike-Gamma](https://github.com/Lab-Frauscher/Spike-Gamma) MATLAB workflow. Candidate detection uses the Janca Hilbert-envelope detector; artifact/spindle rejection, boundary estimation, and preceding-gamma measurement follow the source workflow.
+Eva Ozturk translated the Gamma Spike algorithm, as implemented by John Thomas and colleagues in [Lab-Frauscher/Spike-Gamma](https://github.com/Lab-Frauscher/Spike-Gamma), from MATLAB into Python and integrated it into this software. The workflow uses the Janča Hilbert-envelope spike detector.
 
 #### Time
 
@@ -453,15 +457,19 @@ Summary counts use the official classes present at export, including manual corr
 
 HFO analysis detects candidate high-frequency events, classifies them, and presents them for review. Every route uses selected channels, the active montage and notch settings, one or more candidate detectors (**STE**, **MNI**, or **Hilbert**), shared duration/edge rules, and the same review/export interface.
 
+The detectors, classifiers, and pretrained checkpoints are upstream work. Eva Ozturk integrated and adapted these components to the application's configuration, data handling, visualization, manual review, and export interfaces; this work does not claim new detector algorithms or model training. Component-specific terms, including academic-use restrictions and unresolved reuse permissions, are described in the [third-party notices](https://github.com/m2b3/IEEG/blob/main/THIRD_PARTY_NOTICES.md).
+
 The candidate detector locates possible events; the selected model classifies them. Choosing the same detector across routes does not make their preprocessing or classifications equivalent.
 
 Routes differ in preprocessing, supported band, sampling behavior, classifier, checkpoints, and classes. Results are not interchangeable. Sources: [pyHFO pyBrain](https://github.com/roychowdhuryresearch/pyHFO/tree/pyBrain) and [Omni-iEEG](https://github.com/Omni-iEEG/Omni-iEEG/tree/master/omni_ieeg).
 
-- **pyhfo_pybrain — 80–500 Hz**: default; native sampling; original pyHFO Model A and Model S. Lower rates work only when Nyquist supports the band; above 1000 Hz is required for the complete 80–500 Hz band.
+- **pyhfo_pybrain — 80–500 Hz**: default when installed; native sampling; original pyHFO Model A and Model S. Lower rates work only when Nyquist supports the band; above 1000 Hz is required for the complete 80–500 Hz band.
 - **pyhfo_omni_legacy — 80–300 Hz**: Omni legacy pyHFO route; requires at least 1000 Hz and processes at 1000 Hz.
 - **eHFO — 80–300 Hz**: Omni artifact, spike, and eHFO three-model route with official checkpoints; requires at least 1000 Hz and processes at 1000 Hz.
 
-These implementations reproduce their stated software routes; this is not independent clinical validation. Below 1000 Hz, prefer a compatible pyhfo_pybrain band and interpret comparisons cautiously.
+`pyhfo_pybrain` and `pyhfo_omni_legacy` need Model A/Model S, not bundled with this application. Until installed, both routes are disabled in the classifier dropdown and **eHFO** is used by default. See [README.md](https://github.com/m2b3/IEEG/blob/main/README.md#high-frequency-oscillations-hfo) for what to download and where to place it.
+
+These implementations are intended to follow their stated software routes, but that correspondence has not yet been systematically tested and does not constitute independent scientific or clinical validation. Below 1000 Hz, prefer a compatible pyhfo_pybrain band and interpret comparisons cautiously.
 
 The 1000 Hz threshold is enforced for both Omni routes. For pyhfo_pybrain, the selected upper frequency—not the model name alone—determines Nyquist compatibility.
 
@@ -473,7 +481,7 @@ Enter a non-empty interval inside the recording. The full recording is selected 
 
 Choose a model and band. Defaults are **80–500 Hz** for pyhfo_pybrain and **80–300 Hz** for Omni models. **Ripples 80–250 Hz** and **Custom (experimental)** are available for all routes; **Fast ripples 250–500 Hz** is pyhfo_pybrain-only.
 
-For a custom band, select **Custom (experimental)** and edit **Low frequency** and **High frequency** under **Advanced parameters...**. Click **Save** for the next run. Custom bands are outside documented parity validation, may reset after restart, and appear only under **All ranges** in result filters.
+For a custom band, select **Custom (experimental)** and edit **Low frequency** and **High frequency** under **Advanced parameters...**. Click **Save** for the next run. Custom bands are outside the documented default configurations, may reset after restart, and appear only under **All ranges** in result filters.
 
 In **Advanced parameters...**, enable one or more STE, MNI, or Hilbert detectors and edit their parameters. At least one must remain enabled. The application validates band limits, event duration, merge gap, minimum cycles, and detector settings.
 

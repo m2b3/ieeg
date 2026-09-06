@@ -5,9 +5,19 @@
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 
-> [!WARNING]
-> **Work in progress.** This software is under active development and has not
-> been validated as a medical device.
+> [!CAUTION]
+> **Exploratory research software only.** This software is under active
+> development. Its analysis algorithms have not yet been systematically tested
+> against their reference implementations or scientifically or clinically
+> validated. Assume that the current algorithms may contain major flaws and may
+> produce incorrect or misleading results.
+>
+> Do not use this software or its outputs for diagnosis, treatment, surgical
+> planning, patient care, or any other clinical decision. Independently verify
+> every result. To the fullest extent permitted by applicable law, the authors
+> and contributors provide this software without warranty and accept no
+> responsibility for errors in the algorithms or for decisions made using its
+> outputs. See [LICENSE](LICENSE) for the complete warranty and liability terms.
 
 ## What is this software?
 
@@ -57,26 +67,44 @@ The complete interface and workflow documentation is in the
 [User Guide](https://m2b3.github.io/IEEG/user_guide.html), also available from
 **Help > User Guide** inside the application.
 
+
+## Algorithm attribution
+
+This work integrates and adapts existing scientific methods to this
+application's GUI and data pipeline, including the MATLAB-to-Python translation
+of Spike-Gamma. The underlying algorithms and pretrained models remain credited
+to their original authors. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+for provenance and component-specific licensing terms.
+
 ## Included analysis algorithms
 
 ### Recruitment Energy Index (REI)
 
 REI ranks channels using spectral changes around seizure onset and their
 recruitment delay. This implementation adapts
-the open `IEEG_EI` implementation; it is a review aid rather than a clinical
-conclusion.
+the EI implementation in Apache-2.0-licensed BrainQuake, with parameter choices
+also reflected in Alfredo Lucas's `IEEG_EI`. The current settings combine
+BrainQuake's 60–140 Hz band with IEEG_EI's fourth-order filtering and 10σ onset
+threshold. This app supplies its own analysis interface; it does not use the
+IEEG_EI GUI or iEEG.org login workflow. The recorded intermediate code provenance
+through IEEG_EI remains relevant to permissions; see the third-party notices.
+REI is a review aid, and numerical equivalence to either upstream implementation
+has not been established.
 
 References:
 
 - [Bartolomei, Chauvel & Wendling (2008), *Brain*](https://doi.org/10.1093/brain/awn111)
-- [`allucas/IEEG_EI`](https://github.com/allucas/IEEG_EI)
+- [`HongLabTHU/BrainQuake`](https://github.com/HongLabTHU/BrainQuake) — EI implementation, Apache-2.0.
+- [`allucas/IEEG_EI`](https://github.com/allucas/IEEG_EI) — intermediate source and parameter reference; no explicit reuse license identified.
 
 ### Gamma Spike
 
 Gamma Spike detects interictal spikes, estimates their boundaries, measures
 preceding 30-100 Hz activity, and separates gamma-positive from non-gamma
-spikes. The application contains a Python translation of the Lab-Frauscher
-MATLAB workflow and uses the Janca Hilbert-envelope spike detector.
+spikes. Eva Ozturk translated the Gamma Spike algorithm, as implemented by
+John Thomas and colleagues in Lab-Frauscher/Spike-Gamma, from MATLAB into Python
+and integrated it into this software. The workflow uses the Janča
+Hilbert-envelope spike detector.
 
 References:
 
@@ -98,6 +126,16 @@ are passed to one of three selectable classification routes:
 The classifiers distinguish artifacts, non-spike HFOs, spike-HFOs, and, for the
 eHFO route, eHFO and spike-eHFO events. Results remain available for expert
 review and manual correction.
+
+`pyhfo_pybrain` and `pyhfo_omni_legacy` need Model A and Model S, not
+included in this repository. From [`roychowdhuryresearch/pyHFO`](https://github.com/roychowdhuryresearch/pyHFO):
+
+- `ckpt/model_a.tar`, `ckpt/model_s.tar` → `app/computation/hfo/checkpoints/pyhfo_legacy_binary/`
+- `src/model.py`, `src/hfo_feature.py`, `src/classifer.py` → adapt into
+  `app/computation/hfo/classification/_pyhfo_binary_common/` as `model.py`,
+  `features.py`, `classifier.py`
+
+Until then, only `eHFO` is available.
 
 References:
 
@@ -156,24 +194,24 @@ If your Python 3.11 command is named `python3`, use that instead of
 
 ## HFO files and downloads
 
-A normal Git clone includes the five required classifier checkpoints:
+A normal Git clone includes the three checkpoints required by the **eHFO**
+route (MIT-licensed):
 
 ```text
-app/computation/hfo/checkpoints/pyhfo_legacy_binary/model_a.tar
-app/computation/hfo/checkpoints/pyhfo_legacy_binary/model_s.tar
 app/computation/hfo/checkpoints/ehfo/artifacts.pth
 app/computation/hfo/checkpoints/ehfo/spikes.pth
 app/computation/hfo/checkpoints/ehfo/eHFOs.pth
 ```
 
-No separate model download is normally required. If any file is missing, get it
-from the project's
-[HFO checkpoint folder](https://github.com/m2b3/IEEG/tree/main/app/computation/hfo/checkpoints)
-or clone the repository again.
+`eHFO` works out of the box and is the default classifier when nothing else
+is installed. For `pyhfo_pybrain` and `pyhfo_omni_legacy`, see
+[High-Frequency Oscillations (HFO)](#high-frequency-oscillations-hfo) above.
 
 `HFODetector` is also required for HFO candidate detection. It is installed
 automatically by `requirements.txt`; its package page is
-[here](https://pypi.org/project/HFODetector/).
+[here](https://pypi.org/project/HFODetector/). It carries the same UCLA
+Academic Software License but is installed as a normal PyPI dependency, not
+vendored in this repository.
 
 After installation, verify the environment on Windows:
 
@@ -213,6 +251,20 @@ macOS:
 ./.venv/bin/python -m pip install -r requirements.txt
 ```
 
+## Disclaimer
+
+Use of this software and its outputs is entirely at your own risk. The software
+is provided **“as is”** and **“as available,”** without guarantees or warranties
+of any kind, express or implied, including as to its accuracy, reliability,
+completeness, fitness for a particular purpose, or suitability for clinical or
+research use.
+
+To the fullest extent permitted by applicable law, the authors, contributors,
+and copyright holders will not be liable for any loss, injury, claim, liability,
+or other damage arising from the software, its algorithms, its outputs, or their
+use or inability to be used. This summary does not replace the warranty and
+liability provisions of the [GNU AGPLv3 licence](LICENSE).
+
 ## License
 
 Copyright © 2026 The Project Authors.
@@ -221,6 +273,11 @@ Except for the third-party and derived materials identified in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), project-owned material is
 licensed under the GNU Affero General Public License version 3 only
 (`AGPL-3.0-only`). See [LICENSE](LICENSE) for the complete license terms.
+This is not a blanket license for every bundled algorithm, translation, or model.
+Public source availability and attribution do not establish permission to modify
+or redistribute third-party material. Unresolved and restrictive component terms
+are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); this documentation
+update does not resolve them or change the upstream licenses.
 
 If you modify this software and make the modified version available to users
 over a network, you must offer those users access to the corresponding source

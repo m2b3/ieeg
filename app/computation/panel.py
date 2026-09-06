@@ -53,6 +53,7 @@ from app.computation.hfo.algorithm import (
     HFO_CLASSIFIER_EHFO,
     HFO_CLASSIFIER_PYHFO_OMNI_LEGACY,
     HFO_CLASSIFIER_PYHFO_PYBRAIN,
+    PYHFO_BINARY_COMMON_AVAILABLE,
 )
 from app.computation.hfo.detectors.omni_hfo_detector import DEFAULT_CANDIDATE_DETECTORS, OMNI_TARGET_FS_HZ
 from app.computation.hfo.preprocessing.pybrain import pybrain_effective_high_freq_hz
@@ -105,7 +106,11 @@ HFO_DETECTOR_VERSIONS: tuple[str, ...] = (
     HFO_CLASSIFIER_PYHFO_OMNI_LEGACY,
     HFO_CLASSIFIER_EHFO,
 )
-DEFAULT_HFO_DETECTOR_VERSION = HFO_CLASSIFIER_PYHFO_PYBRAIN
+# pyhfo_pybrain and pyhfo_omni_legacy need Model A/Model S (see README.md);
+# eHFO becomes the default when that isn't installed.
+DEFAULT_HFO_DETECTOR_VERSION = (
+    HFO_CLASSIFIER_PYHFO_PYBRAIN if PYHFO_BINARY_COMMON_AVAILABLE else HFO_CLASSIFIER_EHFO
+)
 HFO_CLASSIFIER_DISPLAY_NAMES: dict[str, str] = {
     classifier: f"{classifier}-{low:g}-{high:g} Hz"
     for classifier, (low, high) in HFO_DEFAULT_BANDS_BY_CLASSIFIER.items()
@@ -116,7 +121,11 @@ HFO_BAND_PRESET_DISPLAY_NAMES: dict[str, str] = {
     FAST_RIPPLE_HFO_BAND_PRESET: "Fast ripples 250-500 Hz",
     CUSTOM_HFO_BAND_PRESET: "Custom (experimental)",
 }
-DISABLED_HFO_CLASSIFIER_OPTIONS: set[str] = set()
+DISABLED_HFO_CLASSIFIER_OPTIONS: set[str] = (
+    set()
+    if PYHFO_BINARY_COMMON_AVAILABLE
+    else {HFO_CLASSIFIER_PYHFO_PYBRAIN, HFO_CLASSIFIER_PYHFO_OMNI_LEGACY}
+)
 HFO_CLASSIFIER_DISPLAY_LABELS: dict[str, str] = {
     HFO_CLASSIFIER_PYHFO_PYBRAIN: "pyhfo_pybrain-80-500Hz",
     HFO_CLASSIFIER_PYHFO_OMNI_LEGACY: "pyhfo_omni_legacy-80-300Hz",
@@ -2698,7 +2707,7 @@ class ComputationPanel(QWidget):
             item = getattr(model, "item", lambda _idx: None)(idx)
             if item is not None:
                 item.setEnabled(False)
-                item.setToolTip("This HFO classifier option is not available in this build.")
+                item.setToolTip("Needs Model A/Model S. See README.md.")
 
     def _lock_hfo_legacy_parameter_controls(self) -> None:
         self._sync_hfo_frequency_controls(

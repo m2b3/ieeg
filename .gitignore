@@ -30,3 +30,12 @@ tests/test_pybrain_preprocessing.py
 .vscode/
 
 codex.md
+
+# pyHFO legacy binary classifier component (UCLA Academic Software License;
+# not redistributable — see
+# app/computation/hfo/classification/_pyhfo_binary_common/README.md)
+/app/computation/hfo/checkpoints/pyhfo_legacy_binary/model_a.tar
+/app/computation/hfo/checkpoints/pyhfo_legacy_binary/model_s.tar
+/app/computation/hfo/classification/_pyhfo_binary_common/classifier.py
+/app/computation/hfo/classification/_pyhfo_binary_common/features.py
+/app/computation/hfo/classification/_pyhfo_binary_common/model.py

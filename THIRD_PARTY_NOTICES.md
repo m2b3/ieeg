@@ -11,6 +11,21 @@ This audit covers the current repository and its Git history. Upstream
 revisions inspected in September 2026 are recorded below so the findings can
 be reproduced.
 
+## Authorship of the integration and adaptations
+
+Eva Ozturk's GSoC 2026 work integrates existing scientific methods into the
+pre-existing IEEG application. It includes the analysis interfaces and data
+pipeline connections, background execution, result displays and expert review,
+metadata/export handling, long-recording adaptations, and MATLAB-to-Python
+translation of Spike-Gamma. These are software engineering and adaptation
+contributions; the underlying algorithms and pretrained models are the work of
+the upstream authors identified below. Some integration code itself is derived
+from upstream workflows, as detailed in the component notices.
+
+Credit for this work does not replace upstream attribution or establish a right
+to relicense source-derived translations or adaptations. The root AGPL applies
+only where the necessary rights are held; existing permission gaps remain open.
+
 ## Recruitment Energy Index: BrainQuake and IEEG_EI
 
 Affected files:
@@ -31,7 +46,41 @@ The core `compute_hfer`, `determine_threshold_onset`, and
 
 A source comparison confirms that IEEG_EI retained substantial BrainQuake EI
 code, with parameter and GUI changes, and that the present REI core is a
-further adaptation of that code.
+further adaptation of that code. BrainQuake is the original software source for
+the shared EI core; the scientific method is credited to Bartolomei, Chauvel,
+and Wendling (2008), DOI: https://doi.org/10.1093/brain/awn111. REI names this
+application's adapted scoring implementation, not a new algorithm invented by
+the integrator. The application uses its own GUI, not IEEG_EI's PySimpleGUI or
+iEEG.org login interface.
+
+### Verified settings and local adaptations
+
+The comparison uses the revisions above, BrainQuake's
+`BrainQuake/gui_forms/ictal_form.py` for its displayed band defaults, and the
+current `app/computation/rei/algorithm.py` for this application's settings.
+
+| Setting | BrainQuake | IEEG_EI | This application's REI |
+| --- | --- | --- | --- |
+| Default band | 60–140 Hz (GUI filter defaults) | 70–140 Hz | 60–140 Hz, editable |
+| Butterworth order, forward/backward filtering | 5 | 4 | 4 |
+| Onset threshold | Baseline maximum + 20σ | Baseline maximum + 10σ | Baseline maximum + 10σ |
+| Baseline standard deviation | Sample SD (`ddof=1`) | Sample SD (`ddof=1`) | Sample SD (`ddof=1`) |
+| Energy integration window | 0.5 s | 0.5 s | 0.5 s |
+| HFER scoring interval | 0.25 s | 0.25 s | Up to 0.25 s, clipped to available samples |
+
+Thus the current settings combine BrainQuake's band with the filter order and
+threshold also used in IEEG_EI. The shared core normalizes squared, integrated
+energy to baseline, ranks threshold-crossing times, combines energy with inverse
+onset rank using a square root, and normalizes scores by the channel maximum.
+
+Local changes include float64 energy normalization and zero-baseline protection,
+non-empty-window checks, clipping the earliest onset and scoring interval to the
+available samples, averaging over the actual clipped interval, and GUI-facing
+channel/montage/notch selection, editable time windows, result objects, plots,
+and exports. These changes can affect numerical results. No numerical parity
+with BrainQuake or IEEG_EI is claimed.
+
+### Licenses and provenance
 
 BrainQuake is licensed under Apache-2.0. Its repository does not identify a
 specific copyright holder in a copyright notice; it is published by the
@@ -47,7 +96,12 @@ IEEG_EI identifies Alfredo Lucas through its Git history but contains no
 license file, copyright notice, or explicit reuse grant. Public availability
 is not a license. The licensing of Alfredo Lucas's changes, and therefore the
 complete permission chain for the present REI files, remains unresolved.
-Those files have not been marked AGPL-3.0-only.
+Those files have not been marked AGPL-3.0-only. Not using IEEG_EI's GUI does not
+by itself establish that its other changes are absent. This attribution update
+is not a replacement or re-derivation of the current core: it cannot describe
+IEEG_EI as a settings-only influence with a fully resolved permission chain.
+That would require a separate source-level review/replacement or permission for
+any remaining IEEG_EI-specific material.
 
 ## Spike-Gamma, John Thomas, Sayeed, and Radek Janča
 
@@ -64,6 +118,12 @@ Affected files:
 - helper/refactoring files in the same directory
 - `app/computation/gamma_spike/wire_algorithm.py`, whose compatibility logic
   is closely tied to the translated workflow
+
+Eva Ozturk translated and adapted the MATLAB workflow for this application's
+Python analysis pipeline and GUI. This includes segmented execution and result
+review/export integration, not invention of the spike detector, boundary rules,
+or gamma-measurement algorithm. MATLAB-to-Python translation remains a
+source-derived adaptation for the purposes of this notice.
 
 The upstream file notices identify:
 
@@ -118,16 +178,21 @@ the package.
 Sources:
 
 - [`roychowdhuryresearch/pyHFO`](https://github.com/roychowdhuryresearch/pyHFO),
-  revision `c1c7d3fec990e8661604080664766dc1297cbfdc`.
+  revision `c1c7d3fec990e8661604080664766dc1297cbfdc`. Relevant upstream
+  files: `src/model.py`, `src/hfo_feature.py`, `src/classifer.py`,
+  `ckpt/model_a.tar`, `ckpt/model_s.tar`.
 - [`roychowdhuryresearch/HFO-Classification`](https://github.com/roychowdhuryresearch/HFO-Classification),
   `Pruning-pipeline`, revision
-  `f96ef79894e3752bf185d60ceb1eb86a48f58f21`.
+  `f96ef79894e3752bf185d60ceb1eb86a48f58f21`. Relevant upstream files:
+  `Pruning-pipeline/src/model.py`, `Pruning-pipeline/feature_extraction.py`,
+  `Pruning-pipeline/src/utils_features.py`.
 
-Affected code is under
+Affected code was under
 `app/computation/hfo/classification/_pyhfo_binary_common/` and related
 classifier/orchestration modules.
 
-The following bundled files are byte-identical to pyHFO upstream checkpoints:
+The following files, previously bundled, were byte-identical to pyHFO
+upstream checkpoints:
 
 - `model_a.tar` — SHA-256
   `3fea070cb08e8789a06a7db3cd7210ba56ac30fd6c21c7517fb58336872b041c`
@@ -140,11 +205,25 @@ license acknowledgment names Yipeng Zhang, Xin Chen, Hoyoung Chung, Lawrence
 Liu, Yuanyi Ding, Hiroki Nariai, and Vwani Roychowdhury.
 
 The license's express prohibition on further transfer means that including
-these checkpoints in a publicly distributable repository is not authorized by
-that license. It is also incompatible with AGPL-3.0-only. Adding the upstream
-license copy preserves the terms but does not cure the redistribution issue.
-The checkpoints and derived classifier code remain unmarked and require
-permission or removal/replacement before distribution.
+these checkpoints, and the classifier/feature/model code adapted from the
+same upstream sources, in a publicly distributable repository was not
+authorized by that license. It was also incompatible with AGPL-3.0-only.
+
+**Resolution:** `model_a.tar`, `model_s.tar`, and the three adapted Python
+files (`classifier.py`, `features.py`, `model.py`) have been removed from
+version control as of this notice's update and are excluded via
+`.gitignore`. They are no longer distributed by this repository. Each user
+must obtain them separately, as an academic or nonprofit researcher under the
+UCLA Academic Software License; see [README.md](README.md#high-frequency-oscillations-hfo)
+for what to download and where to place it. The application detects their
+absence and disables the `pyhfo_pybrain` and `pyhfo_omni_legacy` routes
+accordingly, defaulting to the MIT-licensed `eHFO` route instead.
+
+These files were nonetheless present in this repository's git history and on
+its public remote prior to this fix (introduced in commit `5d337b8`); that
+history has not been rewritten. This notice records the compliance gap and
+its resolution transparently rather than implying the files were never
+exposed.
 
 ## eHFO implementation and checkpoints
 

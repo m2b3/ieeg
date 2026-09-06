@@ -25,12 +25,16 @@ REQUIRED_MODULES = (
     "torchvision",
 )
 
-CHECKPOINTS = (
-    Path("app/computation/hfo/checkpoints/pyhfo_legacy_binary/model_a.tar"),
-    Path("app/computation/hfo/checkpoints/pyhfo_legacy_binary/model_s.tar"),
+REQUIRED_CHECKPOINTS = (
     Path("app/computation/hfo/checkpoints/ehfo/artifacts.pth"),
     Path("app/computation/hfo/checkpoints/ehfo/spikes.pth"),
     Path("app/computation/hfo/checkpoints/ehfo/eHFOs.pth"),
+)
+
+# Not bundled with this repository; see README.md for how to obtain them.
+OPTIONAL_CHECKPOINTS = (
+    Path("app/computation/hfo/checkpoints/pyhfo_legacy_binary/model_a.tar"),
+    Path("app/computation/hfo/checkpoints/pyhfo_legacy_binary/model_s.tar"),
 )
 
 
@@ -55,28 +59,44 @@ def check_imports() -> None:
 
 
 def check_assets() -> None:
-    missing = [str(path) for path in CHECKPOINTS if not path.is_file()]
-    empty = [str(path) for path in CHECKPOINTS if path.is_file() and path.stat().st_size == 0]
+    missing = [str(path) for path in REQUIRED_CHECKPOINTS if not path.is_file()]
+    empty = [str(path) for path in REQUIRED_CHECKPOINTS if path.is_file() and path.stat().st_size == 0]
     if missing or empty:
         details = ", ".join(missing + empty)
         raise RuntimeError(f"missing or empty HFO checkpoint: {details}")
-    print(f"HFO checkpoints: {len(CHECKPOINTS)} present")
+    print(f"HFO checkpoints: {len(REQUIRED_CHECKPOINTS)} present (eHFO)")
+
+    present_optional = [path for path in OPTIONAL_CHECKPOINTS if path.is_file()]
+    if len(present_optional) == len(OPTIONAL_CHECKPOINTS):
+        print(f"HFO checkpoints: {len(OPTIONAL_CHECKPOINTS)} present (pyHFO legacy binary)")
+    else:
+        print(
+            "HFO checkpoints: Model A/Model S not installed "
+            "(pyhfo_pybrain/pyhfo_omni_legacy disabled; see README.md)"
+        )
 
 
 def check_checkpoint_loading() -> None:
     import torch
 
-    from app.computation.hfo.classification._pyhfo_binary_common import model
-    from app.computation.hfo.classification._pyhfo_binary_common.classifier import (
-        _install_pyhfo_pickle_aliases,
-    )
-
-    _install_pyhfo_pickle_aliases(model)
-    for checkpoint in CHECKPOINTS:
+    for checkpoint in REQUIRED_CHECKPOINTS:
         payload = torch.load(checkpoint, map_location="cpu", weights_only=False)
         if not isinstance(payload, dict):
             raise RuntimeError(f"unexpected checkpoint format: {checkpoint}")
-    print(f"HFO checkpoints: {len(CHECKPOINTS)} loaded successfully")
+    print(f"HFO checkpoints: {len(REQUIRED_CHECKPOINTS)} loaded successfully (eHFO)")
+
+    if all(path.is_file() for path in OPTIONAL_CHECKPOINTS):
+        from app.computation.hfo.classification._pyhfo_binary_common import model
+        from app.computation.hfo.classification._pyhfo_binary_common.classifier import (
+            _install_pyhfo_pickle_aliases,
+        )
+
+        _install_pyhfo_pickle_aliases(model)
+        for checkpoint in OPTIONAL_CHECKPOINTS:
+            payload = torch.load(checkpoint, map_location="cpu", weights_only=False)
+            if not isinstance(payload, dict):
+                raise RuntimeError(f"unexpected checkpoint format: {checkpoint}")
+        print(f"HFO checkpoints: {len(OPTIONAL_CHECKPOINTS)} loaded successfully (pyHFO legacy binary)")
 
 
 def check_window() -> None:

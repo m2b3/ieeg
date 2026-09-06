@@ -6,6 +6,7 @@ from typing import Any
 import numpy as np
 from scipy import signal
 
+from app.computation.hfo.classification._pyhfo_binary_common import PYHFO_BINARY_COMMON_AVAILABLE
 from app.computation.hfo.classification.ehfo import classify_ehfo
 from app.computation.hfo.classification.pyhfo_omni_legacy import classify_pyhfo_omni_legacy
 from app.computation.hfo.classification.pyhfo_pybrain import classify_pyhfo_pybrain
@@ -410,9 +411,11 @@ def _validate_classification_output(
 
     status = str(classification.get("status", "unknown"))
     if status != "ok":
+        detail = classification.get("message")
+        suffix = f" {detail}" if detail else ""
         raise RuntimeError(
             f"{classifier_name} classification failed "
-            f"(status={status}, candidates={int(candidate_count)})."
+            f"(status={status}, candidates={int(candidate_count)}).{suffix}"
         )
 
     labels = _label_array(classification.get("classification_label"))

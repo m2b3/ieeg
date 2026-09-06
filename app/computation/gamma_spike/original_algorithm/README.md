@@ -2,10 +2,13 @@
 
 This folder contains the translated scientific building blocks used by the app.
 
-It was derived from:
+Eva Ozturk translated the Gamma Spike algorithm, as implemented by John Thomas
+and colleagues in [Lab-Frauscher/Spike-Gamma](https://github.com/Lab-Frauscher/Spike-Gamma),
+from MATLAB into Python and integrated it into this software. The workflow
+uses the Janča Hilbert-envelope spike detector.
 
-- the validated `Python2` core algorithm translation from `matlab2`
-- the segmented long-recording validation pipeline
+See [THIRD_PARTY_NOTICES.md](../../../../THIRD_PARTY_NOTICES.md) for source
+revisions, component authors, and permission requirements.
 
 The app-level GUI wiring, chunking, metadata, and export result objects live in
 `app/computation/gamma_spike/wire_algorithm.py`.

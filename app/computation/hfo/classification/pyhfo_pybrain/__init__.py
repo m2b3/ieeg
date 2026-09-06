@@ -3,11 +3,27 @@
 
 """pyhfo_pybrain classifier entry point."""
 
+from typing import Any
+
 from app.computation.hfo.classification._pyhfo_binary_common import (
+    PYHFO_BINARY_COMMON_AVAILABLE,
     classify_pyhfo_pybrain_candidate_pool,
 )
 
-classify_pyhfo_pybrain = classify_pyhfo_pybrain_candidate_pool
+_NOT_INSTALLED_STATUS = {
+    "status": "component_not_installed",
+    "message": (
+        "pyhfo_pybrain needs Model A/Model S, not bundled with this "
+        "repository. See README.md."
+    ),
+}
+
+
+def classify_pyhfo_pybrain(*args: Any, **kwargs: Any) -> dict:
+    if not PYHFO_BINARY_COMMON_AVAILABLE:
+        return dict(_NOT_INSTALLED_STATUS)
+    return classify_pyhfo_pybrain_candidate_pool(*args, **kwargs)
+
 
 __all__ = [
     "classify_pyhfo_pybrain",

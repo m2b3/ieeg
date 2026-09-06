@@ -1,4 +1,9 @@
-"""GUI-facing gamma spike detector wrapper."""
+"""GUI-facing integration of the translated Lab-Frauscher Spike-Gamma workflow.
+
+Eva Ozturk's GSoC work adapts execution and results to the application; the
+underlying methods and source-derived compatibility logic retain upstream
+attribution and permission requirements. See THIRD_PARTY_NOTICES.md.
+"""
 
 from __future__ import annotations
 
